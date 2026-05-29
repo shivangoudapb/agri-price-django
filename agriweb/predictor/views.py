@@ -6,6 +6,7 @@ import requests
 def home(request):
 
     prediction = None
+    error = None
 
     if request.method == "POST":
 
@@ -15,14 +16,24 @@ def home(request):
 
             data = form.cleaned_data
 
-            response = requests.post(
-                "https://agri-price-fastapi.onrender.com/predict",
-                json=data
-            )
+            try:
 
-            prediction = response.json()[
-                "forecasted_price"
-            ]
+                response = requests.post(
+                    "https://agri-price-fastapi.onrender.com/predict",
+                    json=data,
+                    timeout=30
+                )
+
+                print("STATUS:", response.status_code)
+                print("TEXT:", response.text)
+
+                response.raise_for_status()
+
+                prediction = response.json()["forecasted_price"]
+
+            except Exception as e:
+
+                error = str(e)
 
     else:
 
@@ -33,6 +44,7 @@ def home(request):
         "predictor/home.html",
         {
             "form": form,
-            "prediction": prediction
+            "prediction": prediction,
+            "error": error
         }
     )
